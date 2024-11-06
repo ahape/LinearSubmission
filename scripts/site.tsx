@@ -12,6 +12,7 @@ type FormFields = {
   urgency: number
   escalation: boolean
   zendeskTicketNumber: string
+  workaround: boolean
 }
 
 const products = [
@@ -55,7 +56,6 @@ export function FormContent() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [workaround, setWorkaround] = useState(false)
-  const [workaroundDesc, setWorkaroundDesc] = useState("")
   const [product, setProduct] = useState(products[0])
   const [zendeskTicketNumber, setZendeskTicketNumber] = useState(getZendeskParameter())
   const [customer, setCustomer] = useState("")
@@ -100,25 +100,16 @@ export function FormContent() {
 
         <fieldset>
           <label htmlFor="workaround">
-            <input id="workaround"
-                   type="checkbox"
+            <select id="workaround"
                    className="field"
-                   checked={workaround}
-                   onChange={e => setWorkaround(e.target.checked)}
-            />
+                   value={workaround ? "Yes" : "No"}
+                   onChange={e => setWorkaround(e.target.value == "Yes")}>
+                <option value="">-SELECT-</option>
+                <option>Yes</option>
+                <option>No</option>
+              </select>
             <span style={{marginLeft:"5px"}}>Is there a workaround?</span>
           </label>
-          {
-            workaround &&
-              <textarea id="workaroundDesc"
-                        className="focusable field"
-                        placeholder="Explain the workaround here"
-                        title="Markdown supported"
-                        rows={5}
-                        value={workaroundDesc}
-                        onChange={e => setWorkaroundDesc(e.target.value)}
-              ></textarea>
-          }
         </fieldset>
 
         <fieldset>
@@ -274,19 +265,10 @@ export function FormContent() {
     mdElement.id = id;
     mdElement.setAttribute("type", "hidden");
     mdElement.setAttribute("name", "markdown");
-
-    let fullDesc = description;
-    if (workaround) {
-      fullDesc += "\n\nThis issue **does** have a workaround";
-      if (workaroundDesc) {
-        fullDesc += `:\n${workaroundDesc}`;
-      }
-    }
-
     mdElement.value = createMarkdown({
       customer,
       customersImpacted,
-      description: fullDesc,
+      description,
       product,
       notes,
       title,
@@ -294,6 +276,7 @@ export function FormContent() {
       user,
       zendeskTicketNumber,
       escalation,
+      workaround,
     })
     return mdElement;
   }
@@ -309,12 +292,13 @@ function createMarkdown({
   description,
   notes,
   product,
+  workaround,
 }: FormFields): string {
   const sections = [
     createParagraph(description),
     ...createTable(
-      ["Product", "Customer", "Impacted"],
-      [product || "N/A", customer || "N/A", customersImpacted]),
+      ["Product", "Customer", "Impacted", "Workaround"],
+      [product || "N/A", customer || "N/A", customersImpacted, workaround ? "Yes" : "No"]),
   ]
 
   if (notes) {
